@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Code Quest — Bridge</title>
+    <style>
+      * { box-sizing: border-box; }
+      html, body { margin: 0; height: 100%; font-family: ui-sans-serif, system-ui, sans-serif; }
+      .layout {
+        display: grid;
+        grid-template-rows: 32px 1fr;
+        height: 100vh;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0 16px;
+        background: #111827;
+        color: #e5e7eb;
+        font-size: 12px;
+        font-family: ui-monospace, SFMono-Regular, monospace;
+      }
+      header strong { color: #fbbf24; }
+      iframe {
+        border: 0;
+        width: 100%;
+        height: 100%;
+        background: #f4f6fb;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="layout">
+      <header>
+        <strong>BRIDGE</strong>
+        <span id="bridge-status">initializing…</span>
+      </header>
+      <iframe id="powerup-iframe" src="/" title="Code Quest"></iframe>
+    </div>
+    <script type="module" src="/src/bridge.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,1273 @@
+* { box-sizing: border-box; }
+
+/* ── Theme colour tokens ──────────────────────────────────────────────────────
+   Default values (the "default" preset). ThemeProvider in theme-context.tsx
+   overwrites these via element.style.setProperty() when a theme is applied,
+   so every colour reference in this file uses var(--color-*) rather than a
+   hardcoded hex, allowing full colour customisation without touching CSS.    */
+:root {
+  --color-primary:      #2563eb;  /* blue-600 — 4.6:1 contrast with white */
+  --color-primary-text: #ffffff;
+  --color-header:       #1e2d4a;
+  --color-header-text:  #ffffff;
+  --color-stage-bg:     #f8f9fc;
+  --color-win-bg:       #ecfdf5;
+  --color-win-text:     #065f46;  /* emerald-900 */
+  --color-fail-bg:      #fef2f2;
+  --color-fail-text:    #991b1b;  /* red-800 */
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #f4f6fb;
+  color: #1d2330;
+}
+
+.app {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  height: 100vh;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 12px 20px;
+  background: var(--color-header);
+  color: var(--color-header-text);
+}
+
+.header h1 {
+  font-size: 18px;
+  margin: 0;
+  font-weight: 600;
+}
+
+.header .level {
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+.theme-switcher {
+  appearance: none;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 6px;
+  color: inherit;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 4px 24px 4px 8px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='rgba(255,255,255,0.7)' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 7px center;
+  flex-shrink: 0;
+}
+.theme-switcher:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+.theme-switcher:focus {
+  outline: 2px solid rgba(255, 255, 255, 0.4);
+  outline-offset: 1px;
+}
+.theme-switcher option {
+  background: #1e2d4a;
+  color: #fff;
+}
+
+@media (max-width: 680px) {
+  .header { padding: 10px 14px; }
+  .header h1 { font-size: 15px; }
+  .header .level { font-size: 12px; width: 100%; }
+}
+
+/* ── Layout ───────────────────────────────────────────────────────────────
+   Three-column layout with a resizable split between workspace and game.
+
+   Wide (>1024px):   [workspace ↔ resize ↔ game] | mastery (fixed 320px)
+                      workspace stretches; game width draggable (min 300px)
+   Medium (≤1024px): workspace+game row / mastery full-width below
+                      resize handle hidden; game snaps to 360px
+   Narrow (≤680px):  single stacked column, scrolls vertically            */
+
+.layout {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  padding: 12px;
+  height: 100%;
+  min-height: 0;
+}
+
+/* Workspace + resize handle + game share all space left of mastery */
+.workspace-game-area {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: row;
+  min-width: 0;
+  min-height: 0;
+  gap: 0;
+}
+
+/* Workspace stretches; game has explicit width set by React state */
+.is-workspace {
+  flex: 1 1 0;
+  min-width: 280px;
+  min-height: 0;
+}
+
+.is-game {
+  flex: 0 0 auto;
+  width: 380px; /* default; overridden by inline style while resizing */
+  min-width: 300px;
+}
+
+/* Progress/mastery panel — always fixed */
+.is-mastery {
+  flex: 0 0 320px;
+  width: 320px;
+}
+
+/* ── Resize handle ──────────────────────────────────────────────────────── */
+.resize-divider {
+  flex: 0 0 12px;
+  width: 12px;
+  cursor: col-resize;
+  position: relative;
+  /* Expand hit-area without affecting layout */
+  margin: 0 -2px;
+  z-index: 1;
+}
+.resize-divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 3px;
+  height: 36px;
+  border-radius: 2px;
+  background: rgba(0, 0, 0, 0.15);
+  transition: background 0.15s, height 0.15s, width 0.15s;
+}
+.resize-divider:hover::after,
+.resize-divider.is-dragging::after {
+  background: var(--color-primary, #3a6df0);
+  height: 56px;
+  width: 4px;
+  opacity: 0.7;
+}
+
+/* Prevent text selection during drag */
+body.panel-resizing {
+  user-select: none;
+  cursor: col-resize;
+}
+
+@media (max-width: 1024px) {
+  .layout {
+    flex-wrap: wrap;
+    align-content: flex-start;
+  }
+  .workspace-game-area {
+    flex: 1 1 100%;
+    min-height: 0;
+  }
+  .is-mastery {
+    flex: 0 0 100%;
+    width: 100%;
+    max-height: 220px;
+  }
+  .is-mastery .event-log { max-height: 120px; }
+  .is-game {
+    flex: 0 0 360px;
+    width: 360px;
+  }
+  /* Hide drag handle — fixed layout at this breakpoint */
+  .resize-divider { display: none; }
+}
+
+@media (max-width: 680px) {
+  .layout {
+    flex-direction: column;
+    overflow-y: auto;
+    flex-wrap: nowrap;
+    gap: 12px;
+  }
+  .workspace-game-area {
+    flex: 0 0 auto;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .is-game  { min-height: 340px; width: auto; flex: 0 0 auto; }
+  .is-workspace { min-height: 360px; flex: 0 0 auto; }
+  .is-mastery { min-height: 200px; flex: 0 0 auto; width: auto; max-height: none; }
+  .resize-divider { display: none; }
+}
+
+.panel {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.panel h2 {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6b7280;
+  margin: 0;
+  padding: 10px 14px;
+  border-bottom: 1px solid #eef0f4;
+}
+
+.workspace { flex: 1; min-height: 0; }
+
+/* ── Workspace toolbox tabs ─────────────────────────────────────────────── */
+.ws-tabs {
+  display: flex;
+  gap: 3px;
+  padding: 6px 8px 0;
+  background: #eef0f4;
+  border-bottom: 1px solid #d8dce6;
+  flex-shrink: 0;
+}
+
+.ws-tab {
+  padding: 4px 12px;
+  border: 1px solid #c8cdd8;
+  border-bottom: none;
+  border-radius: 6px 6px 0 0;
+  background: #dde1ea;
+  color: #555e78;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  white-space: nowrap;
+}
+.ws-tab:hover { background: #cdd1da; color: #333; }
+
+.ws-tab--active {
+  background: #fff;
+  color: #1d2330;
+  font-weight: 600;
+  border-color: #c8cdd8;
+}
+
+.goal {
+  padding: 12px 14px;
+  font-size: 14px;
+  background: #fffbea;
+  border-bottom: 1px solid #f3e8b0;
+}
+
+.stage {
+  flex: 1;
+  /* Floor so the maze canvas always has room to render, even in short panels.
+     The canvas itself auto-fits this box via a ResizeObserver (maze-canvas.tsx). */
+  min-height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+  background: var(--color-stage-bg);
+  overflow: hidden;
+}
+
+.controls {
+  display: flex;
+  gap: 8px;
+  padding: 10px 14px;
+  border-top: 1px solid #eef0f4;
+}
+
+.btn {
+  font-size: 14px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid #d2d8e3;
+  background: white;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: var(--color-primary-text);
+  border-color: var(--color-primary);
+}
+
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-advance {
+  margin-left: auto;
+  background: #10b981;
+  color: white;
+  border-color: #10b981;
+}
+.btn-advance:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.event-log {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 14px;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.event { padding: 4px 0; border-bottom: 1px dashed #eef0f4; }
+.event .ts { color: #9ca3af; margin-right: 6px; }
+.event .type { color: var(--color-primary); font-weight: 600; }
+.event .data { color: #4b5563; }
+
+.banner {
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 500;
+}
+.banner.win { background: var(--color-win-bg); color: var(--color-win-text); }
+.banner.fail { background: var(--color-fail-bg); color: var(--color-fail-text); }
+.banner.idle { background: #f1f5f9; color: #475569; }
+
+.mastery { padding: 12px 14px; }
+.mastery .row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  margin: 4px 0;
+}
+.mastery .bar {
+  height: 6px;
+  background: #eef0f4;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 2px;
+}
+.mastery .bar > span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-primary), color-mix(in srgb, var(--color-primary) 60%, #fff));
+  transition: width 200ms ease;
+}
+
+/* ── Level Builder panel ──────────────────────────────────────────────────
+   Collapsible section at the bottom of the mastery column. The toggle looks
+   like a section header; the body contains the description input or JSON
+   paste area depending on the selected mode.                              */
+
+.build-section {
+  border-top: 1px solid #eef0f4;
+  flex-shrink: 0;
+}
+
+.build-toggle {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 9px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6b7280;
+  cursor: pointer;
+}
+.build-toggle:hover { background: #f8f9fc; }
+
+.build-body {
+  padding: 0 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.build-textarea {
+  width: 100%;
+  border: 1px solid #d2d8e3;
+  border-radius: 6px;
+  padding: 7px 9px;
+  font-size: 12px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #f8f9fc;
+  resize: vertical;
+  min-height: 56px;
+  color: #1d2330;
+}
+.build-textarea-json {
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  min-height: 110px;
+}
+.build-textarea:focus { outline: 2px solid var(--color-primary); border-color: transparent; }
+
+.build-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.build-status {
+  font-size: 12px;
+  padding: 5px 8px;
+  border-radius: 5px;
+}
+.build-status-idle    { background: #eff6ff; color: #1d4ed8; }
+.build-status-success { background: #ecfdf5; color: #047857; }
+.build-status-error   { background: #fef2f2; color: #b91c1c; }
+
+.build-note {
+  font-size: 11px;
+  color: #9ca3af;
+  margin: 0;
+}
+
+.btn-draw {
+  width: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: transparent;
+  font-size: 13px;
+  padding: 9px 12px;
+  font-weight: 600;
+  border-radius: 8px;
+  text-align: center;
+}
+.btn-draw:hover { filter: brightness(1.08); }
+
+.btn-import {
+  width: 100%;
+  background: #f8f9fc;
+  color: #374151;
+  border-color: #d2d8e3;
+  font-size: 12px;
+  padding: 7px 10px;
+  font-weight: 500;
+  border-radius: 8px;
+  text-align: center;
+}
+.btn-import:hover { background: #f1f5f9; }
+
+.build-custom-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  border-top: 1px dashed #eef0f4;
+  padding-top: 6px;
+  margin-top: 2px;
+}
+
+/* ── All Challenges panel ─────────────────────────────────────────────────
+   A collapsible list of every built-in + custom level. Each row shows a
+   completion badge (✅ / ○), the level name, and a "← here" indicator for
+   the active level.                                                        */
+.challenges-body {
+  padding: 0 14px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.challenge-item {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  overflow: hidden;
+  transition: background 100ms, border-color 100ms;
+}
+.challenge-item:hover { background: #f1f5f9; border-color: #e2e8f0; }
+.challenge-item.challenge-current { background: color-mix(in srgb, var(--color-primary) 8%, #fff); border-color: color-mix(in srgb, var(--color-primary) 30%, #fff); }
+
+/* Left clickable region — navigate to level */
+.challenge-select {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 5px 6px 5px 8px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #374151;
+  min-width: 0;
+}
+.challenge-select:disabled { cursor: default; font-weight: 600; }
+
+/* Right export button */
+.challenge-export {
+  background: none;
+  border: none;
+  border-left: 1px solid transparent;
+  padding: 4px 7px;
+  font-size: 14px;
+  cursor: pointer;
+  color: #9ca3af;
+  flex-shrink: 0;
+  transition: background 100ms, color 100ms;
+}
+.challenge-item:hover .challenge-export { border-left-color: #e2e8f0; }
+.challenge-export:hover { background: color-mix(in srgb, var(--color-primary) 15%, #fff); color: var(--color-primary); }
+
+.challenge-status {
+  font-size: 12px;
+  flex-shrink: 0;
+  width: 18px;
+  text-align: center;
+  color: #9ca3af;
+}
+
+.challenge-name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.challenge-here {
+  font-size: 11px;
+  color: var(--color-primary);
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.challenges-divider {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #9ca3af;
+  padding: 6px 8px 2px;
+}
+
+/* ── Maze Editor (med-*) ──────────────────────────────────────────────────
+   Full-screen modal editor. Students pick a tool from the palette on the
+   left and click/drag to paint cells on the grid.                         */
+
+.med-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 20, 40, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 16px;
+}
+
+.med-modal {
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.28);
+  display: flex;
+  flex-direction: column;
+  width: min(1000px, 100%);
+  max-height: calc(100vh - 32px);
+  overflow: hidden;
+}
+
+/* Header ------------------------------------------------------------------ */
+.med-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #eef0f4;
+  flex-shrink: 0;
+}
+
+.med-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1d2330;
+  white-space: nowrap;
+}
+
+.med-name {
+  flex: 1;
+  border: 1px solid #d2d8e3;
+  border-radius: 7px;
+  padding: 6px 10px;
+  font-size: 14px;
+  color: #1d2330;
+  background: #f8f9fc;
+  min-width: 0;
+}
+.med-name:focus { outline: 2px solid var(--color-primary); border-color: transparent; }
+
+.med-close {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.med-close:hover { background: #f1f5f9; color: #374151; }
+
+/* Size row ---------------------------------------------------------------- */
+.med-size-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 16px;
+  border-bottom: 1px solid #eef0f4;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.med-row-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #9ca3af;
+  margin-right: 4px;
+}
+
+.med-size-btn {
+  font-size: 12px;
+  padding: 3px 9px;
+  border-radius: 6px;
+  border: 1px solid #d2d8e3;
+  background: white;
+  cursor: pointer;
+  color: #374151;
+  font-weight: 500;
+}
+.med-size-btn:hover:not(.active) { background: #f1f5f9; }
+.med-size-btn.active {
+  background: var(--color-primary);
+  color: var(--color-primary-text);
+  border-color: var(--color-primary);
+}
+
+/* Body -------------------------------------------------------------------- */
+.med-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Palette ----------------------------------------------------------------- */
+.med-palette {
+  width: 88px;
+  padding: 10px 6px 10px 8px;
+  border-right: 1px solid #eef0f4;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex-shrink: 0;
+  overflow-y: auto;
+}
+
+.med-tool {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 7px 4px;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background: #f8f9fc;
+  cursor: pointer;
+  transition: border-color 120ms, background 120ms, box-shadow 120ms;
+}
+.med-tool:hover { background: #f1f5f9; }
+.med-tool.active {
+  border-color: var(--tc, #3a6df0);
+  background: white;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--tc, #3a6df0) 18%, transparent);
+}
+.med-tool-icon { font-size: 20px; line-height: 1.2; }
+.med-tool-lbl  { font-size: 10px; font-weight: 600; color: #4b5563; }
+
+/* Direction picker */
+.med-dir-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+  padding: 0 2px;
+}
+
+.med-dir {
+  font-size: 17px;
+  line-height: 1;
+  padding: 5px;
+  border-radius: 6px;
+  border: 1px solid #d2d8e3;
+  background: white;
+  cursor: pointer;
+  text-align: center;
+}
+.med-dir:hover:not(.active) { background: #f1f5f9; }
+.med-dir.active {
+  background: #10b981;
+  color: white;
+  border-color: #10b981;
+}
+
+/* Grid canvas ------------------------------------------------------------- */
+.med-grid-wrap {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 16px;
+}
+
+.med-grid {
+  display: grid;
+  gap: 3px;
+  user-select: none;
+  width: fit-content;
+}
+
+.med-cell {
+  border-radius: 5px;
+  border: 1.5px solid #d1d5db;
+  cursor: crosshair;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  line-height: 1;
+  transition: transform 60ms;
+  position: relative;
+}
+.med-cell:hover { filter: brightness(0.94); }
+.med-cell:active { transform: scale(0.88); }
+
+.med-cell-empty { background: #f9fafb; border-color: #d1d5db; }
+.med-cell-wall  {
+  background: #374151;
+  border-color: #1f2937;
+  border-radius: 5px;
+  /* Subtle brick texture via box-shadow */
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.3);
+}
+.med-cell-start { background: #d1fae5; border-color: #10b981; border-width: 2px; }
+.med-cell-goal  { background: #fef9c3; border-color: #f59e0b; border-width: 2px; }
+.med-cell-key   { background: #ede9fe; border-color: #8b5cf6; border-width: 2px; }
+
+.med-start-arrow {
+  font-size: 22px;
+  font-weight: 900;
+  color: #047857;
+  line-height: 1;
+}
+
+/* Footer ------------------------------------------------------------------ */
+.med-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  border-top: 1px solid #eef0f4;
+  flex-shrink: 0;
+}
+
+.med-status { font-size: 13px; font-weight: 500; }
+.med-status.ok  { color: #047857; }
+.med-status.err { color: #b91c1c; }
+
+/* Responsive — stack palette horizontally on narrow screens */
+@media (max-width: 600px) {
+  .med-body { flex-direction: column; }
+  .med-palette {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 6px 10px;
+    border-right: none;
+    border-bottom: 1px solid #eef0f4;
+  }
+  .med-dir-grid { display: none; } /* hide direction on tiny screens */
+  .med-cell { font-size: 16px; }
+}
+
+/* ── Concept intro modal ──────────────────────────────────────────────────*/
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000;
+}
+.modal-card {
+  background: white; border-radius: 12px;
+  padding: 28px 32px; max-width: 480px; width: 90%;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+.modal-card h2 { margin: 0 0 8px; font-size: 22px; }
+.modal-card .concept-name { color: var(--color-primary); font-weight: 700; }
+.modal-card p { line-height: 1.6; color: #374151; margin: 0 0 20px; }
+.modal-card .btn-close { width: 100%; }
+
+/* ── Predict modal ────────────────────────────────────────────────────────*/
+.predict-options { display: flex; flex-direction: column; gap: 8px; margin: 16px 0; }
+.predict-option {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; border: 2px solid #e5e7eb; border-radius: 8px;
+  cursor: pointer; background: white; text-align: left;
+  transition: border-color 0.15s, background 0.15s;
+  font-size: 14px;
+}
+.predict-option:hover { border-color: var(--color-primary); }
+.predict-option.selected { border-color: var(--color-primary); background: #eff6ff; }
+
+/* ── Starter question card ────────────────────────────────────────────────*/
+.starter-question {
+  background: #fffbeb; border: 1px solid #fde68a;
+  border-radius: 8px; padding: 8px 12px;
+  margin: 4px 14px 0; font-size: 13px;
+  display: flex; align-items: flex-start; gap: 8px;
+}
+.starter-question .sq-text { flex: 1; color: #92400e; line-height: 1.4; }
+.starter-question .sq-dismiss {
+  background: none; border: none; cursor: pointer;
+  color: #b45309; font-size: 16px; padding: 0; flex-shrink: 0;
+}
+
+/* ── Debug card ───────────────────────────────────────────────────────────*/
+.debug-card {
+  background: #fffbeb; border: 1px solid #fbbf24;
+  border-radius: 8px; padding: 12px 14px;
+  margin: 8px 14px; font-size: 13px;
+}
+.debug-card h4 { margin: 0 0 8px; font-size: 14px; color: #92400e; }
+.debug-card ol { margin: 0; padding-left: 18px; color: #78350f; }
+.debug-card li { margin-bottom: 4px; }
+
+/* ── Aha moment ───────────────────────────────────────────────────────────*/
+.aha-moment {
+  background: #ecfdf5; border: 1px solid #6ee7b7;
+  border-radius: 8px; padding: 10px 14px;
+  margin: 6px 14px 0; font-size: 13px;
+  color: #065f46; line-height: 1.4;
+}
+
+/* ── Efficiency badge ─────────────────────────────────────────────────────*/
+.efficiency-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: #f0fdf4; border: 1px solid #86efac;
+  border-radius: 20px; padding: 4px 12px;
+  font-size: 12px; color: #15803d; margin-top: 4px;
+}
+
+/* ── Roadmap ──────────────────────────────────────────────────────────────*/
+.roadmap { padding: 4px 0; }
+.roadmap-node {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; border-radius: 8px; margin-bottom: 2px;
+  cursor: pointer; transition: background 0.15s;
+  border: 1px solid transparent;
+}
+.roadmap-node:hover:not(.roadmap-locked) { background: #f3f4f6; }
+.roadmap-node.roadmap-current { background: #eff6ff; border-color: var(--color-primary); }
+.roadmap-node.roadmap-done { opacity: 0.85; }
+.roadmap-node.roadmap-locked { opacity: 0.4; cursor: default; }
+.roadmap-icon { font-size: 18px; flex-shrink: 0; }
+.roadmap-info { flex: 1; min-width: 0; }
+.roadmap-name { font-size: 12px; font-weight: 600; color: #111827; }
+.roadmap-concept { font-size: 11px; color: #6b7280; }
+.roadmap-status { font-size: 14px; flex-shrink: 0; }
+.roadmap-connector {
+  width: 2px; height: 8px; background: #e5e7eb;
+  margin-left: 19px; margin-bottom: 2px;
+}
+
+/* ── Vocabulary glossary ──────────────────────────────────────────────────*/
+.glossary { margin-top: 4px; }
+.glossary-entry { padding: 6px 0; border-bottom: 1px solid #f3f4f6; }
+.glossary-entry:last-child { border-bottom: none; }
+.glossary-term { font-size: 12px; font-weight: 700; color: var(--color-primary); }
+.glossary-def { font-size: 11px; color: #6b7280; line-height: 1.4; margin-top: 2px; }
+
+/* ── Block hint flash ─────────────────────────────────────────────────────
+   Applied to the SVG <g> root of a Blockly toolbox block when the student
+   has failed 3+ times. Pulses an orange glow to say "try this block!".   */
+@keyframes hint-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 0px transparent);
+    opacity: 1;
+  }
+  50% {
+    filter: drop-shadow(0 0 9px rgba(251, 146, 60, 0.95));
+    opacity: 0.85;
+  }
+}
+
+.hint-block-flash {
+  animation: hint-glow 0.8s ease-in-out infinite;
+}
+
+/* ── Python panel (Stage 2 code-reveal) ──────────────────────────────────*/
+.python-panel {
+  background: #1e1e2e;
+  border-radius: 8px;
+  margin: 8px 0 0;
+  overflow: hidden;
+  border: 1px solid #313244;
+}
+.python-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 12px 4px;
+  background: #181825;
+  border-bottom: 1px solid #313244;
+}
+.python-panel-note {
+  font-size: 11px;
+  color: #6c7086;
+  font-style: italic;
+  margin-left: auto;
+}
+
+/* Language tab buttons inside the code panel header */
+.code-lang-tabs {
+  display: flex;
+  gap: 2px;
+}
+.code-lang-tab {
+  background: transparent;
+  border: none;
+  color: #6c7086;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 10px;
+  cursor: pointer;
+  border-radius: 4px 4px 0 0;
+  transition: color 0.15s, background 0.15s;
+  border-bottom: 2px solid transparent;
+  letter-spacing: 0.02em;
+}
+.code-lang-tab:hover { color: #cdd6f4; }
+.code-lang-tab.active {
+  color: #cdd6f4;
+  border-bottom-color: var(--color-primary, #89b4fa);
+  background: rgba(137, 180, 250, 0.08);
+}
+.python-panel-code {
+  margin: 0;
+  padding: 10px 14px;
+  font-family: 'Fira Code', 'Cascadia Code', 'JetBrains Mono', 'Menlo', monospace;
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: #cdd6f4;
+  overflow-x: auto;
+  max-height: 260px;
+  overflow-y: auto;
+  tab-size: 4;
+  white-space: pre;
+}
+.python-panel-empty {
+  padding: 16px 14px;
+  font-size: 12px;
+  color: #585b70;
+  font-style: italic;
+}
+
+/* Python syntax classes */
+.py-kw   { color: #cba6f7; font-weight: 600; }  /* keywords: for, while, if, def … */
+.py-fn   { color: #89b4fa; }                      /* maze API: move_forward, turn_left … */
+.py-num  { color: #fab387; }                      /* numbers */
+.py-id   { color: #cdd6f4; }                      /* other identifiers */
+.py-comment { color: #585b70; font-style: italic; }
+
+/* "See the Code" button active state */
+.btn.btn-active {
+  background: var(--color-primary);
+  color: var(--color-primary-text, #fff);
+  border-color: var(--color-primary);
+}
+
+/* ── Stage 3 workspace mode tabs (Blocks | Code) ─────────────────────────*/
+.ws-mode-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid #e5e7eb;
+  margin: 0 0 4px;
+  flex-shrink: 0;
+}
+.ws-mode-tab {
+  background: none;
+  border: none;
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #9ca3af;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: color 0.15s;
+  letter-spacing: 0.01em;
+}
+.ws-mode-tab:hover { color: #374151; }
+.ws-mode-tab.active {
+  color: var(--color-primary, #3a6df0);
+  border-bottom-color: var(--color-primary, #3a6df0);
+}
+
+/* ── Code editor tab body ─────────────────────────────────────────────────*/
+.code-tab-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.code-tab-lang-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 4px 6px;
+  flex-shrink: 0;
+}
+.code-lang-pill {
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  padding: 3px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+/* Language logo SVGs inside pills */
+.code-lang-pill svg { flex-shrink: 0; }
+.code-lang-pill:hover { background: #e5e7eb; color: #374151; }
+.code-lang-pill.active {
+  background: var(--color-primary, #3a6df0);
+  border-color: var(--color-primary, #3a6df0);
+  color: #fff;
+}
+.code-tab-hint {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-left: 6px;
+  font-style: italic;
+  flex: 1; /* push the hints toggle to the right */
+}
+
+/* Syntax-hints toggle pill — pushed to the right of the lang row */
+.code-hints-toggle {
+  margin-left: auto;
+}
+
+/* ── Inline syntax-hint decorations (CodeMirror) ──────────────────────────*/
+/* These are widget decorations injected after each recognised line.
+   They are purely visual — never part of the document text. */
+.cm-syntax-hint {
+  font-family: inherit;
+  font-size: 0.85em;
+  font-style: italic;
+  color: #5c6a84;        /* muted blue-grey — visible but clearly subordinate */
+  opacity: 0.85;
+  pointer-events: none;  /* not clickable / selectable */
+  user-select: none;
+  padding-left: 2ch;     /* visual gap from the code on the same line */
+}
+
+/* CodeMirror host — fills available space */
+.code-editor-host {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  border-radius: 6px;
+  border: 1px solid #313244;
+}
+.code-editor-host .cm-editor {
+  height: 100%;
+  min-height: 200px;
+}
+.code-editor-host .cm-scroller {
+  overflow: auto;
+}
+
+/* ── Parse errors ─────────────────────────────────────────────────────────*/
+.parse-errors {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  margin: 6px 0 0;
+  padding: 6px 10px;
+  flex-shrink: 0;
+  max-height: 120px;
+  overflow-y: auto;
+}
+.parse-error {
+  display: flex;
+  gap: 8px;
+  font-size: 12px;
+  color: #b91c1c;
+  padding: 2px 0;
+}
+.parse-error-line {
+  font-weight: 700;
+  flex-shrink: 0;
+  color: #ef4444;
+}
+
+/* ── Output Level display ─────────────────────────────────────────────────────
+   Dark-terminal aesthetic for the output panel that replaces MazeCanvas
+   when the current level is an OutputLevel.                                  */
+.output-display {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+/* Terminal window */
+.output-terminal {
+  background: #1e1e2e;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #313244;
+  font-family: 'Fira Mono', 'Cascadia Code', 'Consolas', monospace;
+  min-height: 120px;
+}
+
+.output-terminal-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: #181825;
+  border-bottom: 1px solid #313244;
+}
+
+.output-terminal-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.output-terminal-title {
+  font-size: 11px;
+  color: #6c7086;
+  font-weight: 600;
+  margin-left: 4px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.output-terminal-body {
+  padding: 12px 16px;
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.output-placeholder {
+  font-size: 13px;
+  color: #6c7086;
+  font-style: italic;
+}
+
+.output-running {
+  color: #cdd6f4;
+  animation: blink 0.8s step-end infinite;
+}
+
+@keyframes blink {
+  50% { opacity: 0.4; }
+}
+
+.output-error {
+  color: #f38ba8;
+  font-size: 13px;
+  white-space: pre-wrap;
+}
+
+.output-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 2px 0;
+}
+
+.output-line-text {
+  flex: 1;
+  font-size: 14px;
+  color: #cdd6f4;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.output-line-badge {
+  flex-shrink: 0;
+  font-size: 14px;
+  font-weight: 700;
+  width: 20px;
+  text-align: center;
+}
+
+.output-line--pass .output-line-badge { color: #a6e3a1; }
+.output-line--fail .output-line-badge { color: #f38ba8; }
+
+.output-line--missing .output-line-text { color: #6c7086; font-style: italic; }
+.output-line-missing-text { font-size: 12px; }
+
+/* Expected output section */
+.output-expected {
+  background: #f8f9fc;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 10px 14px;
+}
+
+.output-expected-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.output-expected-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 2px 0;
+  font-family: 'Fira Mono', 'Cascadia Code', 'Consolas', monospace;
+}
+
+.output-expected-num {
+  font-size: 11px;
+  color: #9ca3af;
+  width: 16px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.output-expected-text {
+  font-size: 13px;
+  color: #374151;
+}

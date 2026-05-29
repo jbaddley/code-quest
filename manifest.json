@@ -1,0 +1,145 @@
+{
+  "name": "Code Quest",
+  "slug": "code-quest",
+  "description": "Drag-and-drop maze game that teaches programming fundamentals — sequencing, loops, conditionals. Dot guides students through escalating hints and tracks mastery per concept.",
+  "useCase": "Introduce K-8 students to programming concepts (sequencing, loops, conditionals) through a block-based game. Dot can grade attempts, surface hints, and track mastery via tool calls.",
+  "author": "Jason Baddley",
+  "authorEmail": "jason@schoolai.com",
+  "icon": "type-02",
+  "bgColor": "bg-blue-100",
+  "bgHover": "bg-blue-200",
+  "color": "text-blue-700",
+  "semanticVersion": "0.1.0",
+  "entrypoint": "",
+  "powerupMCPSpecification": {
+    "tools": [
+      {
+        "name": "open",
+        "description": "Opens the Code Quest PowerUp.",
+        "inputSchema": { "type": "object", "properties": {}, "required": [] }
+      },
+      {
+        "name": "evaluateAttempt",
+        "description": "Runs the student's current block program against the active maze level and returns whether it solved the maze, plus a failure signal if not.",
+        "inputSchema": { "type": "object", "properties": {}, "required": [] }
+      },
+      {
+        "name": "generateHint",
+        "description": "Returns a tiered hint for the current level. Level 1 is Socratic, 2 is directive, 3 is a guided walkthrough.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "level": {
+              "type": "number",
+              "enum": [1, 2, 3],
+              "description": "Hint escalation level (1=Socratic, 2=directive, 3=walkthrough)."
+            }
+          },
+          "required": ["level"]
+        }
+      },
+      {
+        "name": "getMastery",
+        "description": "Returns the student's current mastery scores (0..1) across sequencing, loops, conditionals, variables.",
+        "inputSchema": { "type": "object", "properties": {}, "required": [] }
+      },
+      {
+        "name": "setLevel",
+        "description": "Switches the active level. Only call when the student explicitly asks to advance. Progression order: robots-first-steps, long-march, zig-zag, staircase, locked-door. The locked-door level has a key and a locked door (the door only opens once the key is collected).",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "levelId": {
+              "type": "string",
+              "enum": ["robots-first-steps", "long-march", "zig-zag", "staircase", "locked-door", "variable-village", "fog-of-war", "the-snake"],
+              "description": "Target level identifier."
+            }
+          },
+          "required": ["levelId"]
+        }
+      },
+      {
+        "name": "getLevelLesson",
+        "description": "Returns the lesson content for the current level: the concept being taught (e.g. 'Loops'), a kid-friendly explanation, three Socratic starter questions to open with, and an 'aha moment' to celebrate with the student after they solve it. Call this whenever a level starts or when you want to introduce or revisit the concept.",
+        "inputSchema": { "type": "object", "properties": {}, "required": [] }
+      },
+      {
+        "name": "buildLevel",
+        "description": "Design and inject a brand-new custom maze level. YOU (Dot) are the level designer — use your creativity to craft a grid, choose walls, place start/goal, pick concepts, and write hints + lesson content. Call this when the student asks to 'build a level', 'make a harder challenge', 'create a maze for me', etc. The PowerUp validates the maze and switches to it automatically. If validation fails, the error message will tell you what to fix — adjust and retry.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Unique kebab-case identifier, e.g. 'the-gauntlet' or 'triple-loop'. Must not conflict with existing level IDs."
+            },
+            "name": {
+              "type": "string",
+              "description": "Short display name shown in the header, e.g. 'The Gauntlet'."
+            },
+            "goal": {
+              "type": "string",
+              "description": "One sentence describing the challenge, e.g. 'Navigate three corridors using only move-until-wall.'"
+            },
+            "grid": {
+              "type": "array",
+              "description": "Row-major 2D array of cells. Each cell is 'start', 'empty', 'wall', 'goal', or 'key'. MUST have exactly one 'start' and one 'goal'. Goal must be reachable from start.",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": ["start", "empty", "wall", "goal", "key"]
+                }
+              }
+            },
+            "startDir": {
+              "type": "string",
+              "enum": ["north", "east", "south", "west"],
+              "description": "Which direction the robot faces at the start cell."
+            },
+            "concepts": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Concepts this level targets. Use 'sequencing', 'loops', 'conditionals', 'variables', 'repeatUntil', 'nestedLoops'. These control which blocks appear in the toolbox."
+            },
+            "maxSteps": {
+              "type": "integer",
+              "description": "Max instructions before the run is aborted (protects against infinite loops). Use 400 for normal levels, 600 for large grids."
+            },
+            "hints": {
+              "type": "object",
+              "description": "Three progressive hints. '1' is a Socratic question, '2' is a directive tip, '3' is a step-by-step walkthrough.",
+              "properties": {
+                "1": { "type": "string" },
+                "2": { "type": "string" },
+                "3": { "type": "string" }
+              },
+              "required": ["1", "2", "3"]
+            },
+            "lesson": {
+              "type": "object",
+              "description": "Lesson content Dot uses to introduce the level.",
+              "properties": {
+                "concept": { "type": "string", "description": "Concept name, e.g. 'Nested Loops'." },
+                "explanation": { "type": "string", "description": "1-2 sentence plain-English explanation for a 3rd-7th grader." },
+                "starterQuestions": {
+                  "type": "array",
+                  "items": { "type": "string" },
+                  "minItems": 3,
+                  "maxItems": 3,
+                  "description": "Three Socratic questions to open with before the student starts coding."
+                },
+                "ahaMoment": { "type": "string", "description": "The one-liner the student should understand after solving." }
+              },
+              "required": ["concept", "explanation", "starterQuestions", "ahaMoment"]
+            }
+          },
+          "required": ["id", "name", "goal", "grid", "startDir", "concepts", "maxSteps", "hints", "lesson"]
+        }
+      }
+    ]
+  },
+  "permissions": {},
+  "published": true,
+  "assetUrl": "http://localhost:9010/"
+}
