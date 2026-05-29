@@ -25,9 +25,14 @@ function useSvgImage(svg: string | undefined): HTMLImageElement | null {
     const el = new Image()
     el.onload = () => setImg(el)
     el.onerror = () => setImg(null)
-    el.src = svg.trimStart().startsWith('<')
-      ? 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg)
-      : svg
+    const trimmed = svg.trimStart()
+    el.src = trimmed.startsWith('<')
+      ? 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(trimmed)
+      // Prefix absolute paths with Vite's BASE_URL so sprites load correctly
+      // on GitHub Pages (where the app is served under /code-quest/).
+      : trimmed.startsWith('/')
+        ? import.meta.env.BASE_URL.replace(/\/$/, '') + trimmed
+        : trimmed
     return () => { el.onload = null; el.onerror = null }
   }, [svg])
   return img
