@@ -1,0 +1,484 @@
+{
+  "schemaVersion": 1,
+  "id": "maze-adventures",
+  "title": "Maze Adventures",
+  "description": "Nine progressively challenging mazes that take students from basic sequencing through loops, conditionals, variables, repeat-until, nested loops, and functions. Guide a robot to the goal by writing programs that grow more elegant at every level.",
+  "author": "Jason Baddley",
+  "authorEmail": "jason@schoolai.com",
+  "createdAt": "2026-05-30T00:00:00Z",
+  "updatedAt": "2026-05-30T00:00:00Z",
+  "concepts": ["sequencing", "loops", "conditionals", "variables", "repeatUntil", "nestedLoops", "functions"],
+  "objectives": [
+    "Students will be able to sequence instructions to move a robot through a maze.",
+    "Students will be able to use loops to eliminate repeated code and write more elegant solutions.",
+    "Students will be able to use conditionals to make decisions based on game state.",
+    "Students will be able to store and reuse values with variables.",
+    "Students will be able to define and call named procedures to organize reusable code."
+  ],
+  "standards": [
+    {
+      "framework": "CSTA K-12",
+      "code": "1A-AP-08",
+      "description": "Model daily processes by creating and following algorithms (sets of step-by-step instructions) to complete tasks."
+    },
+    {
+      "framework": "CSTA K-12",
+      "code": "1B-AP-10",
+      "description": "Create programs that include sequences, events, loops, and conditionals."
+    },
+    {
+      "framework": "CSTA K-12",
+      "code": "2-AP-12",
+      "description": "Design and iteratively develop programs that combine control structures, including nested loops and compound conditionals."
+    }
+  ],
+  "assessments": [
+    {
+      "id": "assess-sequencing-1",
+      "type": "multiple-choice",
+      "question": "Why does the ORDER of instructions matter when programming a robot?",
+      "options": [
+        "It doesn't — the computer picks the best order automatically.",
+        "Computers follow instructions exactly in order, one at a time.",
+        "The robot always goes to the goal, regardless of order.",
+        "Only the last instruction matters."
+      ],
+      "correctIndex": 1,
+      "rubric": "Student demonstrates that computers execute instructions sequentially."
+    },
+    {
+      "id": "assess-loops-1",
+      "type": "multiple-choice",
+      "question": "You need to move forward 8 times. Which is the BEST way to write this?",
+      "options": [
+        "Drag 8 separate 'move forward' blocks.",
+        "Use a 'repeat 8' block with one 'move forward' inside.",
+        "Use two 'repeat 4' blocks.",
+        "Both B and C are equally good."
+      ],
+      "correctIndex": 3,
+      "rubric": "Both B and C demonstrate understanding of loops as a compression of repetition."
+    },
+    {
+      "id": "assess-conditionals-1",
+      "type": "multiple-choice",
+      "question": "What does an 'if' statement do?",
+      "options": [
+        "It repeats a block of code multiple times.",
+        "It only runs the code inside it when a condition is true.",
+        "It stops the program when something goes wrong.",
+        "It makes the robot move in a loop."
+      ],
+      "correctIndex": 1,
+      "rubric": "Student understands conditional execution."
+    },
+    {
+      "id": "assess-functions-1",
+      "type": "reflection",
+      "question": "Describe in your own words: why would a programmer define a function instead of just copying the same code multiple times?",
+      "rubric": "Look for: write once / reuse many times; easier to change; code is shorter and clearer."
+    }
+  ],
+  "gradeBand": [2, 8],
+  "estimatedMinutes": 180,
+  "prerequisites": [],
+  "published": true,
+  "tags": { "type": "maze", "difficulty": "beginner-to-intermediate", "subject": "computer-science" },
+  "levels": [
+    {
+      "id": "robots-first-steps",
+      "name": "Robot's first steps",
+      "goal": "Guide the robot to the star.",
+      "optimalBlocks": 5,
+      "prediction": {
+        "question": "If you put just ONE 'move forward' block and press Run, what will happen?",
+        "options": [
+          "The robot zooms all the way to the star",
+          "The robot takes one step forward",
+          "The robot turns toward the star"
+        ],
+        "correctIndex": 1
+      },
+      "grid": [
+        ["start", "empty", "empty", "empty", "empty"],
+        ["wall",  "wall",  "wall",  "empty", "empty"],
+        ["empty", "empty", "empty", "empty", "empty"],
+        ["empty", "empty", "empty", "empty", "empty"],
+        ["empty", "empty", "empty", "empty", "goal"]
+      ],
+      "startDir": "east",
+      "concepts": ["sequencing", "loops"],
+      "maxSteps": 200,
+      "hints": {
+        "1": "Look at the wall pattern. What direction does the robot need to go first, and how can you avoid hitting the wall?",
+        "2": "Try moving east 4 times, then turn right, then south 4 times. Want to use a `repeat 4` block to make it shorter?",
+        "3": "Drag a `repeat 4` block. Inside it, put one `move forward`. After the repeat, add `turn right`, then another `repeat 4` with a `move forward` inside."
+      },
+      "lesson": {
+        "concept": "Sequencing",
+        "explanation": "Computers follow instructions one at a time, in the exact order you write them — this is called a *sequence*. Change the order, get a different result. It's like a recipe: you crack the egg before you scramble it, never after!",
+        "starterQuestions": [
+          "If I told you to put on your shoes — what would happen if you tried to tie the laces BEFORE putting them on?",
+          "Do you think the robot cares about order? What do you think happens if you tell it to turn before it's even moved?",
+          "Looking at the maze, what's the very FIRST move the robot should make to get past that wall?"
+        ],
+        "ahaMoment": "Order matters. Computers do exactly what you say, in exactly the order you say it — no more, no less."
+      }
+    },
+    {
+      "id": "long-march",
+      "name": "The long march",
+      "goal": "Same path as before — but longer. There has to be a faster way…",
+      "optimalBlocks": 5,
+      "prediction": {
+        "question": "Without loops, how many 'move forward' blocks would you need to solve this?",
+        "options": ["6 blocks", "12 blocks", "18 blocks"],
+        "correctIndex": 1
+      },
+      "grid": [
+        ["start", "empty", "empty", "empty", "empty", "empty", "empty"],
+        ["empty", "empty", "empty", "empty", "empty", "empty", "empty"],
+        ["empty", "empty", "empty", "empty", "empty", "empty", "empty"],
+        ["empty", "empty", "empty", "empty", "empty", "empty", "empty"],
+        ["empty", "empty", "empty", "empty", "empty", "empty", "empty"],
+        ["empty", "empty", "empty", "empty", "empty", "empty", "empty"],
+        ["empty", "empty", "empty", "empty", "empty", "empty", "goal"]
+      ],
+      "startDir": "east",
+      "concepts": ["sequencing", "loops"],
+      "maxSteps": 200,
+      "hints": {
+        "1": "It's the same shape as last time — just longer. Stacking 12 move blocks works, but is there a tidier way?",
+        "2": "Try a `repeat 6` with a `move forward` inside. Then turn right. Then another `repeat 6`.",
+        "3": "Drag a `repeat` block, change the 4 to a 6, drop one `move forward` inside. After it, add `turn right`. Then a second `repeat 6` with a `move forward` inside."
+      },
+      "lesson": {
+        "concept": "Loops (repeat)",
+        "explanation": "When you need to do the same thing many times, a *loop* lets you write it once and run it many times. Instead of dragging 6 move blocks, you drag one `repeat 6` block with a single move inside. Programmers are lazy in a good way — they never write the same thing twice!",
+        "starterQuestions": [
+          "If you had to walk 6 steps, would you rather say 'step, step, step, step, step, step' — or just 'walk 6 steps'?",
+          "Count how many times the robot needs to move east on this grid. Does dragging that many blocks sound fun?",
+          "What do you think a `repeat 6` block actually does when the program runs — can you picture it?"
+        ],
+        "ahaMoment": "Loops are shortcuts. Find the part that repeats, wrap it in a loop, and your whole program gets shorter and cleaner."
+      }
+    },
+    {
+      "id": "zig-zag",
+      "name": "Zig-zag",
+      "goal": "The walls force you to weave. Repeats are your friend.",
+      "optimalBlocks": 14,
+      "prediction": {
+        "question": "Count the long straight corridors. How many are there?",
+        "options": ["2 corridors", "3 corridors", "4 corridors"],
+        "correctIndex": 1
+      },
+      "grid": [
+        ["start", "empty", "empty", "empty", "empty", "empty", "empty"],
+        ["wall",  "wall",  "wall",  "wall",  "wall",  "wall",  "empty"],
+        ["empty", "empty", "empty", "empty", "empty", "empty", "empty"],
+        ["empty", "wall",  "wall",  "wall",  "wall",  "wall",  "wall"],
+        ["empty", "empty", "empty", "empty", "empty", "empty", "goal"]
+      ],
+      "startDir": "east",
+      "concepts": ["sequencing", "loops"],
+      "maxSteps": 300,
+      "hints": {
+        "1": "Trace the path with your finger first. How many segments of 6 moves do you see?",
+        "2": "East 6, turn right, south 2, turn right, west 6, turn left, south 2, turn left, east 6. Use `repeat 6` for each long run.",
+        "3": "Three `repeat 6` blocks (each with a `move forward` inside), separated by the right turns. Between them: `turn right` after segment 1, `turn right` then south 2 then `turn right` after segment 2, and `turn left` then south 2 then `turn left` to point back east for segment 3."
+      },
+      "lesson": {
+        "concept": "Finding Patterns",
+        "explanation": "Every complicated path is actually a pattern in disguise. Once you spot what's repeating, you can describe it with a loop instead of a long list of steps. Programmers call this *abstraction* — seeing the shape of a problem, not just every little detail.",
+        "starterQuestions": [
+          "Before writing a single block, trace the path with your finger. Do you notice any part that looks the same more than once?",
+          "How many long corridors does the robot have to run down? Are they all the same length?",
+          "If you had to describe this whole maze path in ONE sentence to a friend, what would you say?"
+        ],
+        "ahaMoment": "Complex paths are just simple patterns repeated. Spot the pattern first — then code it."
+      }
+    },
+    {
+      "id": "staircase",
+      "name": "Staircase",
+      "goal": "Climb the staircase down to the star.",
+      "optimalBlocks": 8,
+      "prediction": {
+        "question": "Look at one stair step. How many actions does the robot take to complete it?",
+        "options": [
+          "1 action (just forward)",
+          "2 actions (forward + turn)",
+          "4 actions (the whole stair pattern)"
+        ],
+        "correctIndex": 2
+      },
+      "grid": [
+        ["start", "empty", "wall",  "wall",  "wall",  "wall",  "wall"],
+        ["wall",  "empty", "empty", "wall",  "wall",  "wall",  "wall"],
+        ["wall",  "wall",  "empty", "empty", "wall",  "wall",  "wall"],
+        ["wall",  "wall",  "wall",  "empty", "empty", "wall",  "wall"],
+        ["wall",  "wall",  "wall",  "wall",  "empty", "empty", "wall"],
+        ["wall",  "wall",  "wall",  "wall",  "wall",  "empty", "empty"],
+        ["wall",  "wall",  "wall",  "wall",  "wall",  "wall",  "goal"]
+      ],
+      "startDir": "east",
+      "concepts": ["sequencing", "loops"],
+      "maxSteps": 300,
+      "hints": {
+        "1": "Each step of the staircase is the same little dance. What two moves repeat?",
+        "2": "The repeating unit is: turn right, move, turn left, move. Wrap that in a repeat block.",
+        "3": "Start with one `move forward`. Then a `repeat 5` containing: turn right, move forward, turn left, move forward. Finish with turn right, move forward to land on the star."
+      },
+      "lesson": {
+        "concept": "Loop Bodies",
+        "explanation": "A loop doesn't have to repeat just one move — it can repeat a whole little *program*. You can put as many blocks as you like inside a loop, and all of them run together, over and over. The stuff inside the loop is called the *loop body*.",
+        "starterQuestions": [
+          "Look at just ONE step of the staircase. What does the robot have to do — how many moves is that?",
+          "If the pattern for one stair is four actions, and there are 5 stairs, how many actions is that in total? Would you want to drag them all?",
+          "What parts of the solution go INSIDE the loop, and what parts go OUTSIDE of it?"
+        ],
+        "ahaMoment": "A loop body is its own mini-program. Find what repeats as a group, put the whole group inside the loop."
+      }
+    },
+    {
+      "id": "locked-door",
+      "name": "Locked door",
+      "goal": "The door is locked! Grab the key 🔑 first, then open the door ★.",
+      "optimalBlocks": 10,
+      "prediction": {
+        "question": "What do you think happens if the robot goes straight to the door without the key?",
+        "options": [
+          "The door opens anyway",
+          "The robot gets stuck — door is locked!",
+          "The robot turns around"
+        ],
+        "correctIndex": 1
+      },
+      "grid": [
+        ["start", "empty", "empty", "empty", "empty"],
+        ["empty", "empty", "empty", "empty", "empty"],
+        ["empty", "empty", "goal",  "empty", "empty"],
+        ["empty", "empty", "empty", "empty", "empty"],
+        ["key",   "empty", "empty", "empty", "empty"]
+      ],
+      "startDir": "east",
+      "concepts": ["sequencing", "conditionals"],
+      "maxSteps": 300,
+      "hints": {
+        "1": "The door is locked. What do you need before you can open it — and where is it?",
+        "2": "Go get the key in the bottom-left corner first. Then head to the door. Use the `if has key` block to wrap the \"go to the door\" steps.",
+        "3": "Face south and move down 4 to the key. Then add an `if has key` block. Inside it: turn to face the door (east 2, then north 2) so you only approach the door once you actually hold the key."
+      },
+      "lesson": {
+        "concept": "Conditionals (if statements)",
+        "explanation": "Sometimes you only want to do something *if* a certain condition is true — that's an `if` statement. It checks something, and only runs the code inside it when the answer is yes. This is how programs make decisions: games check if you won, apps check if you're logged in, and our robot checks whether it's holding the key!",
+        "starterQuestions": [
+          "What do you think happens if the robot goes straight to the door without picking up the key first? Give it a try!",
+          "Have you ever seen a locked gate in a video game — one that only opens after you find an item? How did that feel?",
+          "The `if has key` block only runs what's inside it when the robot is carrying the key. Can you think of a real-life example of an 'if' rule like that?"
+        ],
+        "ahaMoment": "Conditionals make programs smart. Instead of always doing the same thing, your program can check what's true and decide what to do."
+      }
+    },
+    {
+      "id": "variable-village",
+      "name": "Variable Village",
+      "goal": "Two different distances — can one loop handle both?",
+      "optimalBlocks": 7,
+      "prediction": {
+        "question": "The two corridors have different lengths: 6 and 4. How many move blocks WITHOUT loops?",
+        "options": ["8 blocks total", "10 blocks total", "12 blocks total"],
+        "correctIndex": 1
+      },
+      "grid": [
+        ["start", "empty", "empty", "empty", "empty", "empty", "empty"],
+        ["wall",  "wall",  "wall",  "wall",  "wall",  "wall",  "empty"],
+        ["empty", "empty", "empty", "empty", "empty", "empty", "empty"],
+        ["empty", "empty", "empty", "empty", "empty", "empty", "empty"],
+        ["empty", "empty", "empty", "empty", "empty", "empty", "goal"]
+      ],
+      "startDir": "east",
+      "concepts": ["sequencing", "variables"],
+      "maxSteps": 300,
+      "hints": {
+        "1": "The two corridors are different lengths. What if you could store the length in a box, then tell the loop to repeat that many times?",
+        "2": "Use `set steps to 6`, then `repeat [steps]` to move east. After turning, use `set steps to 4` and `repeat [steps]` again to move south.",
+        "3": "Drag `set steps to 6`, then a `repeat [steps]` block with one `move forward` inside. Add `turn right`. Then `set steps to 4`, another `repeat [steps]` with one `move forward` inside."
+      },
+      "lesson": {
+        "concept": "Variables",
+        "explanation": "A *variable* is like a labelled box that holds a value. You can put a number in it, use it in your program, then change what's in the box and use it again. This means you can write ONE loop that works for ANY distance — just change the variable!",
+        "starterQuestions": [
+          "Imagine you have a box labelled 'steps'. If I write `steps = 6` on a slip of paper and put it in, what does the loop `repeat steps { move }` do?",
+          "The two corridors here are different lengths. Would you write two completely different loops — or find a way to reuse one?",
+          "What's the difference between writing `repeat 6` and `repeat steps` where `steps = 6`?"
+        ],
+        "ahaMoment": "Variables give names to values. Change the variable, and every place that uses it changes too — write the loop once, use it forever."
+      }
+    },
+    {
+      "id": "fog-of-war",
+      "name": "Fog of War",
+      "goal": "The corridors are too long to count — find a smarter way to move.",
+      "optimalBlocks": 9,
+      "prediction": {
+        "question": "If you use 'repeat 9 {move}' but the corridor is actually 10 cells long, what happens?",
+        "options": [
+          "The robot reaches the end fine",
+          "The robot stops one cell too early",
+          "The robot crashes"
+        ],
+        "correctIndex": 1
+      },
+      "grid": [
+        ["start", "empty", "empty", "empty", "empty", "empty", "empty", "empty", "empty", "empty"],
+        ["wall",  "wall",  "wall",  "wall",  "wall",  "wall",  "wall",  "wall",  "wall",  "empty"],
+        ["empty", "empty", "empty", "empty", "empty", "empty", "empty", "empty", "empty", "empty"],
+        ["empty", "wall",  "wall",  "wall",  "wall",  "wall",  "wall",  "wall",  "wall",  "wall"],
+        ["empty", "empty", "empty", "empty", "empty", "empty", "empty", "empty", "empty", "goal"]
+      ],
+      "startDir": "east",
+      "concepts": ["sequencing", "repeatUntil"],
+      "maxSteps": 400,
+      "hints": {
+        "1": "Counting 9 steps every time is painful. What if there was a block that just kept moving until it couldn't anymore?",
+        "2": "Use `move forward until wall` for every stretch — including the short south hops. The walls stop the robot at exactly the right spot each time.",
+        "3": "Five `move until wall` blocks, four turns: move-until-wall, turn right, move-until-wall, turn right, move-until-wall, turn left, move-until-wall, turn left, move-until-wall. The last one lands right on the goal!"
+      },
+      "lesson": {
+        "concept": "Repeat Until (while loops)",
+        "explanation": "A *while loop* keeps repeating as long as a condition is true — or until something changes. `Move until wall` is a while loop: it keeps moving forward until it CAN'T anymore. You don't need to know how far — the loop figures it out. This is much more powerful than counting!",
+        "starterQuestions": [
+          "How many steps is each long corridor in this maze? Would you want to type that number manually?",
+          "Imagine a robot exploring a building. It has no map — it can't count rooms. How would it know when to stop walking down a corridor?",
+          "What's the difference between `repeat 9 { move }` and `move until wall`? Which is safer if the corridor length changes?"
+        ],
+        "ahaMoment": "While loops check a condition instead of counting. They're perfect when you don't know — or don't care — how many times something should repeat."
+      }
+    },
+    {
+      "id": "the-snake",
+      "name": "The Snake",
+      "goal": "Sweep every row — your program must cover the whole grid.",
+      "optimalBlocks": 13,
+      "prediction": {
+        "question": "How many times does the 'sweep east, step down, sweep west, step down' pattern repeat?",
+        "options": ["Once", "Twice", "Three times"],
+        "correctIndex": 1
+      },
+      "grid": [
+        ["start", "empty", "empty", "empty", "empty"],
+        ["empty", "empty", "empty", "empty", "empty"],
+        ["empty", "empty", "empty", "empty", "empty"],
+        ["empty", "empty", "empty", "empty", "empty"],
+        ["empty", "empty", "empty", "empty", "goal"]
+      ],
+      "startDir": "east",
+      "concepts": ["sequencing", "loops", "nestedLoops"],
+      "maxSteps": 500,
+      "hints": {
+        "1": "Look at the path row by row. Does the east-then-west pattern repeat? How many times?",
+        "2": "The outer loop runs 2 times. Each time: move east 4, step south, turn around, move west 4, step south, turn around. Then one final east run to the goal.",
+        "3": "repeat 2 { repeat 4{move}, turn right, move, turn right, repeat 4{move}, turn left, move, turn left }. Then repeat 4{move} to reach the star."
+      },
+      "lesson": {
+        "concept": "Nested Loops",
+        "explanation": "A loop's *body* is just a mini-program — which means it can contain other loops! A *nested loop* is a loop inside a loop: the inner one runs completely for every single step of the outer one. This is how programs draw grids, sweep areas, process tables, and render images.",
+        "starterQuestions": [
+          "Look at the grid row by row — does the robot's movement form a repeating pattern? What's the smallest unit that repeats?",
+          "If you had to describe the whole path to a friend in one sentence, what would you say?",
+          "Can you put a `repeat 4 { move }` block inside another `repeat` block? What do you think happens?"
+        ],
+        "ahaMoment": "A loop inside a loop: the inner loop completes ALL its rounds for each single step of the outer loop. This is how you describe patterns in two dimensions."
+      }
+    },
+    {
+      "id": "define-and-reuse",
+      "name": "Define & Reuse",
+      "goal": "Create your own named block and reuse it!",
+      "optimalBlocks": 8,
+      "prediction": {
+        "question": "If you had to write 'turn right, move, turn left' three times in a row, how many blocks would that be?",
+        "options": ["3 blocks", "9 blocks", "It depends"],
+        "correctIndex": 1
+      },
+      "grid": [
+        ["start", "empty", "empty", "empty"],
+        ["empty", "empty", "empty", "empty"],
+        ["wall",  "wall",  "empty", "empty"],
+        ["empty", "empty", "empty", "empty"],
+        ["empty", "empty", "empty", "goal"]
+      ],
+      "startDir": "east",
+      "concepts": ["sequencing", "functions"],
+      "maxSteps": 300,
+      "hints": {
+        "1": "The robot needs to make the same \"step down\" move more than once. Could you give that move a name?",
+        "2": "Define a procedure called \"step-down\" that contains: turn right, move, turn left. Then call it wherever you need that move.",
+        "3": "Drag \"define my-move\". Inside it: turn right, move forward, turn left. Then drag \"do my-move\" wherever you want to step down."
+      },
+      "lesson": {
+        "concept": "Functions (Procedures)",
+        "explanation": "A *function* is a named block of code you define once and use many times. Instead of copying the same moves over and over, you give them a name and 'call' them whenever you need them. In real programming, functions are everywhere — they keep code short and organized.",
+        "starterQuestions": [
+          "If you had to write 'turn right, move, turn left' three times, would you copy it, or would you rather give it a name?",
+          "Think about verbs like 'eat breakfast' or 'brush teeth' — those are real-life functions. What moves could you bundle into a function in this maze?",
+          "What do you think happens when you 'call' a function — does it happen once or every time you call it?"
+        ],
+        "ahaMoment": "Functions are reusable actions. Name a sequence once, call it everywhere — your code gets shorter and changes in one place apply everywhere."
+      }
+    }
+  ],
+  "narrative": {
+    "title": "The Robot's Journey",
+    "synopsis": "A robot wakes up in a strange world of mazes. With your help, it learns to move, think, and reason — growing smarter at every challenge until it can navigate any labyrinth on its own.",
+    "chapters": [
+      {
+        "levelId": "robots-first-steps",
+        "chapterTitle": "First Steps",
+        "chapterSynopsis": "The robot opens its eyes for the first time. Every journey begins with a single step — but in what order?"
+      },
+      {
+        "levelId": "long-march",
+        "chapterTitle": "The Long Road",
+        "chapterSynopsis": "The path ahead is long. Surely there's a smarter way to give all those instructions…"
+      },
+      {
+        "levelId": "zig-zag",
+        "chapterTitle": "The Weave",
+        "chapterSynopsis": "The walls force the robot left and right. Hidden in the chaos is a pattern waiting to be found."
+      },
+      {
+        "levelId": "staircase",
+        "chapterTitle": "Stepping Down",
+        "chapterSynopsis": "Each stair is the same little dance. Master one step and you've mastered them all."
+      },
+      {
+        "levelId": "locked-door",
+        "chapterTitle": "The Locked Gate",
+        "chapterSynopsis": "The goal is in sight — but the door won't budge. The robot must learn to make decisions."
+      },
+      {
+        "levelId": "variable-village",
+        "chapterTitle": "The Variable Village",
+        "chapterSynopsis": "Two paths, two lengths, one loop. The robot discovers the power of named values."
+      },
+      {
+        "levelId": "fog-of-war",
+        "chapterTitle": "Into the Fog",
+        "chapterSynopsis": "The corridors stretch into darkness — too long to count. The robot learns to trust its senses."
+      },
+      {
+        "levelId": "the-snake",
+        "chapterTitle": "The Snake",
+        "chapterSynopsis": "The robot must sweep every row of the grid. A loop inside a loop makes it elegant."
+      },
+      {
+        "levelId": "define-and-reuse",
+        "chapterTitle": "The Robot's Own Language",
+        "chapterSynopsis": "The robot invents its own moves. By naming what it knows, it speaks in a language it created."
+      }
+    ]
+  }
+}

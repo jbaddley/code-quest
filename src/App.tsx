@@ -39,6 +39,8 @@ import {
 } from './mcp/use-powerup-client'
 import type { AnyLevel, CodeQuestState, MazeLevel, OutputLevel, Mastery, RunResult, ThemeConfig, LevelPrediction } from './types'
 import { exportMaze, parseMazeShare, readFileText } from './utils/maze-share'
+import { curriculumRegistry } from './curriculum/registry'
+import { validateModule } from './curriculum/validate'
 import { ThemeProvider, resolveTheme } from './theme/theme-context'
 import { compileToPython } from './blocks/maze-python-generator'
 import { compileToJavaScript } from './blocks/maze-js-generator'
@@ -253,6 +255,9 @@ export function App() {
   // IDs of every level the student has solved at least once — persisted.
   const [completedLevelIds, setCompletedLevelIds] = useState<string[]>([])
 
+  // Active curriculum module (if the student has been placed into one via setModule).
+  const [activeModuleId, setActiveModuleId] = useState<string | undefined>(undefined)
+
   // Visual maze editor modal
   const [showEditor, setShowEditor] = useState(false)
 
@@ -391,6 +396,7 @@ export function App() {
         customLevelsRef.current = data.customLevels
         setCustomLevels(data.customLevels)
       }
+      if (data.activeModuleId) setActiveModuleId(data.activeModuleId)
       // Restore active level and its workspace.
       if (data.levelId) {
         const restored: AnyLevel | undefined = getLevel(data.levelId)
@@ -426,9 +432,10 @@ export function App() {
       hintsUsed: 0,
       completedLevelIds,
       customLevels,
+      activeModuleId,
       ...overrides,
     }),
-    [completedLevelIds, customLevels, level.id, mastery, stage, workspaceXml, workspacesMap],
+    [activeModuleId, completedLevelIds, customLevels, level.id, mastery, stage, workspaceXml, workspacesMap],
   )
 
   // ── Event recorder ─────────────────────────────────────────────────────
@@ -1357,8 +1364,124 @@ export function App() {
             `Tell the student their custom challenge is ready and ask if they'd like a hint to get started!`,
         )
       },
+      listModules: async ({ includeUnpublished = false }) => {
+        const modules = curriculumRegistry.listModules(!!includeUnpublished)
+        const summary = modules.map((m) => ({
+          id: m.id,
+          title: m.title,
+          description: m.description,
+          concepts: m.concepts,
+          gradeBand: m.gradeBand,
+          estimatedMinutes: m.estimatedMinutes,
+          prerequisites: m.prerequisites,
+          levelCount: m.levels.length,
+          published: m.published,
+        }))
+        return ok(JSON.stringify(summary))
+      },
+      getModule: async ({ moduleId }) => {
+        if (!moduleId) return fail('moduleId is required')
+        const m = curriculumRegistry.getModule(moduleId)
+        if (!m) return fail(`Module "${moduleId}" not found. Call listModules to see available modules.`)
+        const result = {
+          id: m.id,
+          title: m.title,
+          description: m.description,
+          author: m.author,
+          concepts: m.concepts,
+          objectives: m.objectives,
+          standards: m.standards,
+          assessments: m.assessments,
+          gradeBand: m.gradeBand,
+          estimatedMinutes: m.estimatedMinutes,
+          prerequisites: m.prerequisites,
+          published: m.published,
+          tags: m.tags,
+          levels: m.levels.map((l) => ({ id: l.id, name: l.name, concepts: l.concepts })),
+          narrative: m.narrative,
+        }
+        return ok(JSON.stringify(result))
+      },
+      setModule: async ({ moduleId, levelId }) => {
+        if (!moduleId) return fail('moduleId is required')
+        const m = curriculumRegistry.getModule(moduleId)
+        if (!m) return fail(`Module "${moduleId}" not found.`)
+        const targetId = levelId ?? m.levels[0]?.id
+        if (!targetId) return fail(`Module "${moduleId}" has no levels.`)
+        const target = curriculumRegistry.getLevel(targetId)
+        if (!target) return fail(`Level "${targetId}" not found in module "${moduleId}".`)
+        setActiveModuleId(moduleId)
+        advanceToLevel(targetId, target)
+        return ok(
+          `Activated module "${m.title}" (${moduleId}). ` +
+            `Switched to level "${target.name}" (${targetId}). ` +
+            `Module has ${m.levels.length} level(s) covering: ${m.concepts.join(', ')}.`,
+        )
+      },
+      createModule: async (args) => {
+        const { id, title, description, concepts, objectives, gradeBand, prerequisites, estimatedMinutes, author } = args as Record<string, unknown>
+        const now = new Date().toISOString()
+        const newModule = {
+          schemaVersion: 1 as const,
+          id: String(id ?? ''),
+          title: String(title ?? ''),
+          description: String(description ?? ''),
+          author: String(author ?? 'Dot'),
+          createdAt: now,
+          updatedAt: now,
+          concepts: Array.isArray(concepts) ? (concepts as string[]) : [],
+          objectives: Array.isArray(objectives) ? (objectives as string[]) : [],
+          gradeBand: (Array.isArray(gradeBand) ? gradeBand : [2, 8]) as [number, number],
+          prerequisites: Array.isArray(prerequisites) ? (prerequisites as string[]) : [],
+          estimatedMinutes: typeof estimatedMinutes === 'number' ? estimatedMinutes : undefined,
+          published: false,
+          levels: [],
+        }
+        const validation = validateModule(newModule)
+        if (!validation.valid) {
+          return fail(`Invalid module: ${validation.errors.join('; ')}`)
+        }
+        curriculumRegistry.registerModule(newModule)
+        return ok(
+          `Module "${newModule.title}" (id: ${newModule.id}) created with 0 levels. ` +
+            `Use buildLevel then addLevelToModule to add levels, then exportModule to save it.`,
+        )
+      },
+      addLevelToModule: async ({ moduleId, levelId, position }) => {
+        if (!moduleId) return fail('moduleId is required')
+        if (!levelId) return fail('levelId is required')
+        const m = curriculumRegistry.getModule(moduleId)
+        if (!m) return fail(`Module "${moduleId}" not found.`)
+        // Look up in registry (built-in levels) then custom levels
+        const allKnown: AnyLevel[] = [...ALL_LEVELS, ...customLevelsRef.current]
+        const lvl = allKnown.find((l) => l.id === levelId)
+        if (!lvl) {
+          return fail(
+            `Level "${levelId}" not found. Known IDs: ${allKnown.map((l) => l.id).join(', ')}.`,
+          )
+        }
+        try {
+          curriculumRegistry.addLevelToModule(moduleId, lvl, typeof position === 'number' ? position : undefined)
+        } catch (e) {
+          return fail(e instanceof Error ? e.message : String(e))
+        }
+        const updated = curriculumRegistry.getModule(moduleId)!
+        return ok(
+          `Level "${lvl.name}" (${levelId}) added to module "${m.title}". ` +
+            `Module now has ${updated.levels.length} level(s).`,
+        )
+      },
+      exportModule: async ({ moduleId }) => {
+        if (!moduleId) return fail('moduleId is required')
+        try {
+          const json = curriculumRegistry.exportModule(moduleId)
+          return ok(`Module JSON for "${moduleId}":\n\n${json}`)
+        } catch (e) {
+          return fail(e instanceof Error ? e.message : String(e))
+        }
+      },
     }
-  }, [advanceToLevel, canAdvance, lastWinEfficient, level, mastery, requestHint, runProgram, upsertCustomLevel])
+  }, [advanceToLevel, canAdvance, lastWinEfficient, level, mastery, requestHint, runProgram, setActiveModuleId, upsertCustomLevel])
 
   const bannerClass = useMemo(() => {
     if (status === 'win') return 'banner win'

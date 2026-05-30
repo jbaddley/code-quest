@@ -1,0 +1,220 @@
+{
+  "schemaVersion": 1,
+  "id": "print-and-output",
+  "title": "Print & Output",
+  "description": "Five levels that introduce programs as communicators. Students learn to use print() to display text and numbers, discover the difference between string and number literals, and practise sequencing in an output context.",
+  "author": "Jason Baddley",
+  "authorEmail": "jason@schoolai.com",
+  "createdAt": "2026-05-30T00:00:00Z",
+  "updatedAt": "2026-05-30T00:00:00Z",
+  "concepts": ["print", "literals", "output", "strings", "sequencing"],
+  "objectives": [
+    "Students will be able to use print() to display text and numbers on the screen.",
+    "Students will be able to distinguish between string literals and number literals.",
+    "Students will be able to sequence multiple print() calls to produce multi-line output in the correct order."
+  ],
+  "standards": [
+    {
+      "framework": "CSTA K-12",
+      "code": "1B-AP-10",
+      "description": "Create programs that include sequences, events, loops, and conditionals."
+    },
+    {
+      "framework": "CSTA K-12",
+      "code": "1B-DA-06",
+      "description": "Organize and present collected data visually to highlight relationships and support a claim."
+    }
+  ],
+  "assessments": [
+    {
+      "id": "assess-output-1",
+      "type": "multiple-choice",
+      "question": "What does the print() function do in a program?",
+      "options": [
+        "It sends a document to a printer.",
+        "It displays text or numbers on the screen.",
+        "It asks the user to type something.",
+        "It stops the program."
+      ],
+      "correctIndex": 1,
+      "rubric": "Student understands that print() produces visible output."
+    },
+    {
+      "id": "assess-output-2",
+      "type": "multiple-choice",
+      "question": "What is the difference between the text \"42\" and the number 42 in programming?",
+      "options": [
+        "There is no difference — they're the same thing.",
+        "\"42\" is a string (characters); 42 is a number you can use in math.",
+        "Numbers are always bigger than strings.",
+        "You can only print numbers, not text."
+      ],
+      "correctIndex": 1,
+      "rubric": "Student can articulate the distinction between string and number types."
+    },
+    {
+      "id": "assess-output-3",
+      "type": "reflection",
+      "question": "If you flip the order of two print() blocks, what changes about the output? Why does this matter?",
+      "rubric": "Look for: the lines swap order; sequencing affects the result; computers run instructions top to bottom."
+    }
+  ],
+  "gradeBand": [3, 8],
+  "estimatedMinutes": 60,
+  "prerequisites": ["maze-adventures"],
+  "published": true,
+  "tags": { "type": "output", "difficulty": "beginner", "subject": "computer-science" },
+  "levels": [
+    {
+      "type": "output",
+      "id": "output-first-output",
+      "name": "Your First Output",
+      "goal": "Make the program print the word Hello.",
+      "concepts": ["print", "literals"],
+      "expectedOutput": ["Hello"],
+      "optimalLines": 1,
+      "hints": {
+        "1": "Every program needs a way to show its result. What block lets you print words?",
+        "2": "Drag the 🖨️ print block into the workspace. You can type any text inside the quotes.",
+        "3": "Drag \"🖨️ print\" and type Hello (with a capital H) in the text field, then press Run."
+      },
+      "lesson": {
+        "concept": "Output",
+        "explanation": "A program is only useful if it can share its results. `print()` is how a program talks to you — it sends text to the screen. Every language has something like print(): it's one of the very first things every programmer learns.",
+        "starterQuestions": [
+          "If a calculator gives you an answer, how do you see it?",
+          "If you wrote a recipe program, how would it tell you the ingredients?",
+          "What do you think the word \"output\" means in programming?"
+        ],
+        "ahaMoment": "Programs communicate through output — `print()` is how your code says something to the world."
+      }
+    },
+    {
+      "type": "output",
+      "id": "output-print-number",
+      "name": "Print a Number",
+      "goal": "Make the program print the number 42.",
+      "concepts": ["print", "literals"],
+      "expectedOutput": ["42"],
+      "optimalLines": 1,
+      "hints": {
+        "1": "Numbers and text are different in code. Which block is built for printing numbers?",
+        "2": "Use the 🔢 print block and change the number field to 42.",
+        "3": "Drag the \"🔢 print\" block and set its number to 42, then press Run."
+      },
+      "lesson": {
+        "concept": "Output",
+        "explanation": "In programming, numbers and text (called \"strings\") are different kinds of data. A number like 42 can be used in math; a string like \"Hello\" is just characters. `print()` works with both — but it is good to know the difference.",
+        "starterQuestions": [
+          "What is the difference between the word \"42\" and the number 42?",
+          "If you add 1 to the word \"42\", what do you think happens?",
+          "Can you think of a program that would need to print a number?"
+        ],
+        "ahaMoment": "Numbers and text are different types of data — `print()` can show both, but they behave differently in calculations."
+      }
+    },
+    {
+      "type": "output",
+      "id": "output-hello-world",
+      "name": "Hello, World!",
+      "goal": "Print the classic programmer greeting: Hello, World!",
+      "concepts": ["print", "literals"],
+      "expectedOutput": ["Hello, World!"],
+      "optimalLines": 1,
+      "hints": {
+        "1": "There is a famous first program every programmer writes. Can you guess what it prints?",
+        "2": "Use the 🖨️ print block. Make sure you include the comma and exclamation mark exactly.",
+        "3": "Drag \"🖨️ print\" and type: Hello, World! (with a capital H, comma, space, capital W, and !)"
+      },
+      "lesson": {
+        "concept": "Output",
+        "explanation": "\"Hello, World!\" is the first program almost every programmer writes — it has been a tradition since 1978. It proves your program can run and shows output. Exact spelling matters: computers are very precise about punctuation and capitalisation.",
+        "starterQuestions": [
+          "Why do you think programmers always start by printing \"Hello, World!\"?",
+          "Does it matter if you write \"hello, world\" instead of \"Hello, World!\"? Why?",
+          "What would happen if your robot got directions that said \"Go North\" instead of \"go north\"?"
+        ],
+        "ahaMoment": "Computers are exact — one wrong character changes the result. Spelling and punctuation matter in code just like in writing."
+      }
+    },
+    {
+      "type": "output",
+      "id": "output-two-lines",
+      "name": "Two Lines",
+      "goal": "Print \"Hello\" on one line, then \"World\" on the next line.",
+      "concepts": ["print", "literals", "sequencing"],
+      "expectedOutput": ["Hello", "World"],
+      "optimalLines": 2,
+      "hints": {
+        "1": "Each print() block creates a new line. How many blocks do you need for two lines?",
+        "2": "Drag two 🖨️ print blocks — one for Hello and one for World. Stack them in the right order.",
+        "3": "Stack \"🖨️ print Hello\" above \"🖨️ print World\". The top block runs first."
+      },
+      "lesson": {
+        "concept": "Output",
+        "explanation": "Just like with the robot maze, order matters! Each `print()` runs top to bottom. The first block prints the first line; the second block prints the second line. This is sequencing applied to output — the same idea, a new context.",
+        "starterQuestions": [
+          "If you flip the two blocks, what do you think will happen?",
+          "How is \"two print blocks\" similar to \"two move blocks\" in the maze?",
+          "What would you need to print your full name on two separate lines?"
+        ],
+        "ahaMoment": "Sequencing works for output too — each `print()` runs in order, top to bottom, one line at a time."
+      }
+    },
+    {
+      "type": "output",
+      "id": "output-mixed",
+      "name": "Mixed Output",
+      "goal": "Print \"The answer is\" on one line, then print the number 42 on the next line.",
+      "concepts": ["print", "literals", "sequencing"],
+      "expectedOutput": ["The answer is", "42"],
+      "optimalLines": 2,
+      "hints": {
+        "1": "You need to print two things — one is text, the other is a number. Which block is which?",
+        "2": "Use the 🖨️ print text block first (for \"The answer is\") then the 🔢 print number block (for 42).",
+        "3": "Stack \"🖨️ print The answer is\" above \"🔢 print 42\". Make sure the text matches exactly."
+      },
+      "lesson": {
+        "concept": "Output",
+        "explanation": "Real programs often mix text labels with number results — like a calculator that says \"Answer: 42\" instead of just \"42\". Combining text and numbers in output is one of the most common things programs do.",
+        "starterQuestions": [
+          "Can you think of a real program that shows both words and numbers?",
+          "Why is it helpful to label a number with words? (e.g. \"Score: 100\" vs just \"100\")",
+          "What two blocks will you need to solve this, and what order should they go in?"
+        ],
+        "ahaMoment": "Programs mix text labels and numbers all the time — combining them makes output meaningful and easy to read."
+      }
+    }
+  ],
+  "narrative": {
+    "title": "Speaking in Code",
+    "synopsis": "Programs are silent unless they speak. In this module, you learn to give your programs a voice — printing words and numbers that communicate results to the world.",
+    "chapters": [
+      {
+        "levelId": "output-first-output",
+        "chapterTitle": "Finding Your Voice",
+        "chapterSynopsis": "Every program needs a way to say something. You write your first word."
+      },
+      {
+        "levelId": "output-print-number",
+        "chapterTitle": "Numbers Speak Too",
+        "chapterSynopsis": "Words aren't the only kind of output. Numbers have a voice too — and they're different from text."
+      },
+      {
+        "levelId": "output-hello-world",
+        "chapterTitle": "A Tradition Since 1978",
+        "chapterSynopsis": "Every programmer writes this program first. Now it's your turn to join the tradition."
+      },
+      {
+        "levelId": "output-two-lines",
+        "chapterTitle": "Two Lines, One Story",
+        "chapterSynopsis": "Order still matters. Each line is a sentence in the story your program tells."
+      },
+      {
+        "levelId": "output-mixed",
+        "chapterTitle": "Labels and Values",
+        "chapterSynopsis": "Words and numbers together: a program that can explain its own results."
+      }
+    ]
+  }
+}

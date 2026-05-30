@@ -19,6 +19,12 @@ export interface RpcHandlers {
   setLevel: (args: { levelId?: string } & Record<string, unknown>) => Promise<MCPToolResult>
   getLevelLesson: (args: Record<string, unknown>) => Promise<MCPToolResult>
   buildLevel: (args: Record<string, unknown>) => Promise<MCPToolResult>
+  listModules: (args: { includeUnpublished?: boolean } & Record<string, unknown>) => Promise<MCPToolResult>
+  getModule: (args: { moduleId?: string } & Record<string, unknown>) => Promise<MCPToolResult>
+  setModule: (args: { moduleId?: string; levelId?: string } & Record<string, unknown>) => Promise<MCPToolResult>
+  createModule: (args: Record<string, unknown>) => Promise<MCPToolResult>
+  addLevelToModule: (args: { moduleId?: string; levelId?: string; position?: number } & Record<string, unknown>) => Promise<MCPToolResult>
+  exportModule: (args: { moduleId?: string } & Record<string, unknown>) => Promise<MCPToolResult>
 }
 
 export interface MCPToolResult {

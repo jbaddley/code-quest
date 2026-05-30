@@ -115,6 +115,8 @@ export interface CodeQuestState {
   customLevels?: MazeLevel[]
   /** Concept names for which the intro card has already been shown. */
   seenConcepts?: string[]
+  /** The active curriculum module ID, if the student has been placed into one. */
+  activeModuleId?: string
 }
 
 /**
